@@ -36,13 +36,17 @@ $PACBIO/ccs --numThreads=32 TPMT_NNK_css2.bam bax2bam_combined.subreads.bam
 
 ## Aligning consensus reads to reference
 
-We are using BWA mem for alignment. Our version was 0.7.10-r789.
+We are using BWA mem (version 0.7.10-r789) for alignment.
 
-Make a reference fasta  that contains all the sequence between the SMRT bell adaptors, *plus a few bases* of adaptor. *Delete the barcode.* The barcode sequence will then become an insertion in the BWA alignment
+### Create a reference sequence file
+
+Make a reference fasta that contains all the sequence between the SMRT bell adaptors, *plus a few bases* of adaptor. *Delete the barcode.* The barcode sequence will then become an insertion in the BWA alignment
 
 Example:
 
 ```
+mkdir reference
+cd reference
 vim TPMT.fa
 ```
 
@@ -51,16 +55,20 @@ vim TPMT.fa
 TGTACAAGATGGATGGTACAAGAACTTCACTTGACATTGAAGAGTACTCGGATACTGAGGTACAGAAAAACCAAGTACTAACTCTGGAAGAATGGCAAGACAAGTGGGTGAACGGCAAGACTGCTTTTCATCAGGAACAAGGACATCAGCTATTAAAGAAGCATTTAGATACTTTCCTTAAAGGCAAGAGTGGACTGAGGGTATTTTTTCCTCTTTGCGGAAAAGCGGTTGAGATGAAATGGTTTGCAGACCGGGGACACAGTGTAGTTGGTGTGGAAATCAGTGAACTTGGGATACAAGAATTTTTTACAGAGCAGAATCTTTCTTACTCAGAAGAACCAATCACCGAAATTCCTGGAACCAAAGTATTTAAGAGTTCTTCGGGGAACATTTCATTGTACTGTTGCAGTATTTTTGATCTTCCCAGGACAAATATTGGCAAATTTGACATGATTTGGGATAGAGGAGCATTAGTTGCCATTAATCCAGGTGATCGCAAATGCTATGCAGATACAATGTTTTCCCTCCTGGGAAAGAAGTTTCAGTATCTCCTGTGTGTTCTTTCTTATGATCCAACTAAACATCCAGGTCCACCATTTTATGTTCCACATGCTGAAATTGAAAGGTTGTTTGGTAAAATATGCAATATACGTTGTCTTGAGAAGGTTGATGCTTTTGAAGAACGACATAAAAGTTGGGGAATTGACTGTCTTTTTGAAAAGTTATATCTACTTACAGAAAAGTAACTCGAGCATATGACATGTCCTAGGCTTAAGCTAGCTCTAGACTGATCAGCCTCGACTGTGCCTTCTAGTTGCCAGCCATCTGTTGTTTGCCCCTCCCCCGTGCCTTCCTTGACCCTGGAAGGTGCCACTCCCACTGTCCTTTCCTAATAAAATGAGGAAATTGCATCGCATTGTCTGAGTAGGTGTCATTCTATTCTGGGGGGTGGGGTGGGGCAGGACAGCAAGGGGGAGGATTGGGAAGACAATAGCAGGCATGC
 ```
 
-### Create index file for reference fasta
-
 ```
-$PACBIO/samtools faidx ../reference/TMPT.fa
+cd ..
 ```
 
-### Create reference genome using reference fasta with BWA:
+### Create an index file for your reference fasta
 
 ```
-bwa index -a is ../reference/TMPT.fa
+$PACBIO/samtools faidx reference/TMPT.fa
+```
+
+### Create a reference genome index for BWA:
+
+```
+bwa index -a is reference/TMPT.fa
 ```
 
 ### Run BWA alignment:
@@ -69,7 +77,7 @@ Example shell script:
 
 ```
 #!/bin/bash
-bwa mem -C -M -L 80 ../reference/TMPT.fa <($PACBIO/samtools view -F 1 ../TPMT_NNK_css2.bam | awk 'BEGIN{ FS="\t"; OFS="\n" }{ split($0,a,"\t"); helper = ""; for (i=12; i <= length(a); i++) { helper = helper""a[i]"\t"}; sub("\t$","",helper); print "@"$1" "helper,$10,"+",$11 }' ) | $PACBIO/samtools view -uS - | $PACBIO/samtools sort -o TPMT_NNK_css2_aligned.bam - 
+bwa mem -C -M -L 80 reference/TMPT.fa <($PACBIO/samtools view -F 1 TPMT_NNK_css2.bam | awk 'BEGIN{ FS="\t"; OFS="\n" }{ split($0,a,"\t"); helper = ""; for (i=12; i <= length(a); i++) { helper = helper""a[i]"\t"}; sub("\t$","",helper); print "@"$1" "helper,$10,"+",$11 }' ) | $PACBIO/samtools view -uS - | $PACBIO/samtools sort -o TPMT_NNK_css2_aligned.bam - 
 $PACBIO/samtools flagstat TPMT_NNK_css2_aligned.bam > TPMT_NNK_css2_aligned.bam_stats
 ```
 
