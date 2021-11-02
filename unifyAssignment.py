@@ -36,19 +36,19 @@ for filename in args:
     for line in infile:
       fields = line.split()
       if len(fields) == 3:
-        mQual = mean(map(lambda x:ord(x)-33,fields[2]))
+        mQual = mean([x-33 for x in fields[2]])
         barcodes[fields[0]].append((fields[1],mQual))
     infile.close()
 
-for barcode,observations in sorted(barcodes.iteritems()):
+for barcode,observations in sorted(barcodes.items()):
   freq = defaultdict(int)
   for seq,qual in observations:
     freq[seq]+=1
-  res = map(lambda (x,y):(y,x),freq.iteritems())
+  res = [(x_y1[1],x_y1[0]) for x_y1 in iter(freq.items())]
   res.sort()
   if res[-1][0]/float(len(observations)) > 0.5:
-    sys.stdout.write("%s\t%s\n"%(barcode,res[-1][1]))
+    sys.stdout.write("%s\t%s\n"%(barcode.decode('ascii'),res[-1][1].decode('ascii')))
   else:
-    res = map(lambda (x,y):(y,x),observations)
+    res = [(x_y[1],x_y[0]) for x_y in observations]
     res.sort()
-    sys.stdout.write("%s\t%s\n"%(barcode,res[-1][1]))
+    sys.stdout.write("%s\t%s\n"%(barcode.decode('ascii'),res[-1][1].decode('ascii')))
