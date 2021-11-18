@@ -200,7 +200,7 @@ options.end = options.end-1
 
 for bamfile in args:
   if options.verbose:
-    print "Opening:",bamfile
+    print("Opening:",bamfile)
   input_file = pysam.Samfile( bamfile, "rb" )
   BAMreferences = dict(enumerate(input_file.references))
   #referenceLengths = dict(zip(input_file.references,input_file.lengths))
@@ -232,7 +232,7 @@ for bamfile in args:
     	softClipped += 1
     	continue
     if options.minMapQ > read.mapq: continue
-    if options.minBaseQ > min(map(lambda x: ord(x)-33,read.qual)): continue
+    if options.minBaseQ > min([ord(x)-33 for x in read.qual]): continue
     passedBasic += 1
     #if count > 25: sys.exit()
     
